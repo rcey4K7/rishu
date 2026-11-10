@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2B47D1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="履修">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>履修スケジュール 2026年度 後期3Q</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+  --bg:#F1F3F8; --surface:#FFFFFF; --ink:#18202F; --muted:#59647A; --line:#D8DDE8;
+  --accent:#2B47D1; --accent-soft:#E4E9FC; --ok:#1B7A4B; --bad:#B8430B; --warn-bg:#FFF1E3;
+  --tint-l:93%; --tint-s:55%; --stripe-l:44%; --stripe-s:58%;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#10141C; --surface:#192031; --ink:#E9EDF5; --muted:#9AA5BA; --line:#2A3347;
+    --accent:#93A5FF; --accent-soft:#232C4F; --ok:#5CC98F; --bad:#F29A62; --warn-bg:#3A2A1C;
+    --tint-l:22%; --tint-s:30%; --stripe-l:66%; --stripe-s:55%;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#10141C; --surface:#192031; --ink:#E9EDF5; --muted:#9AA5BA; --line:#2A3347;
+  --accent:#93A5FF; --accent-soft:#232C4F; --ok:#5CC98F; --bad:#F29A62; --warn-bg:#3A2A1C;
+  --tint-l:22%; --tint-s:30%; --stripe-l:66%; --stripe-s:55%;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:inherit}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+  font-size:15px; line-height:1.65; -webkit-text-size-adjust:100%;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.wrap{max-width:680px;margin:0 auto;padding:20px 16px 104px}
+.top h1{margin:0;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.top .term{display:flex;flex-wrap:wrap;gap:2px 14px;margin-top:2px;font-size:12px;color:var(--muted)}
+
+.course{--h:220}
+.tintbg{background:hsl(var(--h) var(--tint-s) var(--tint-l))}
+.stripe{background:hsl(var(--h) var(--stripe-s) var(--stripe-l))}
+
+/* nav */
+nav.tabs{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;
+  background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+nav.tabs a{
+  flex:1;text-align:center;padding:13px 4px 12px;font-size:13px;font-weight:700;
+  color:var(--muted);text-decoration:none;border-top:3px solid transparent;margin-top:-1px;
+}
+nav.tabs a[aria-current="page"]{color:var(--accent);border-top-color:var(--accent)}
+
+.view{display:none}
+.view.on{display:block}
+
+/* today */
+.hero{margin:22px 0 14px}
+.hero .date{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.hero .md{font-size:34px;font-weight:900;line-height:1.1;letter-spacing:.01em}
+.hero .wd{font-size:17px;font-weight:700;color:var(--muted)}
+.hero .sum{margin:6px 0 0;color:var(--muted);font-size:14px}
+.chips{display:flex;gap:6px;margin:0 0 16px;flex-wrap:wrap}
+.chip{
+  border:1px solid var(--line);background:var(--surface);border-radius:999px;
+  padding:3px 13px;font-size:13px;font-weight:700;color:var(--muted);
+}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.istoday{border-color:var(--accent);color:var(--accent)}
+.chip.istoday[aria-pressed="true"]{color:var(--bg);background:var(--accent)}
+
+.rail{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:54px 1fr;gap:12px;position:relative}
+.row .t{padding-top:14px;text-align:right;font-variant-numeric:tabular-nums;line-height:1.35}
+.row .t b{display:block;font-size:16px}
+.row .t span{font-size:12px;color:var(--muted)}
+.row .card{
+  position:relative;border-radius:10px;padding:12px 14px 12px 18px;margin-bottom:4px;
+  background:var(--surface);border:1px solid var(--line);overflow:hidden;
+}
+.row .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:hsl(var(--h) var(--stripe-s) var(--stripe-l))}
+.row .name{font-size:17px;font-weight:700;line-height:1.35}
+.row .meta{font-size:13px;color:var(--muted)}
+.row.done .card{opacity:.55}
+.row.now .card{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.row.next .card{border-color:var(--accent)}
+.state{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:1px 9px}
+.gap{margin:0 0 4px;padding:6px 0 10px 66px;font-size:12px;color:var(--muted)}
+.marks{display:flex;gap:8px;margin-top:10px}
+.mark{
+  border:1px solid var(--line);background:transparent;border-radius:8px;
+  padding:5px 16px;font-size:13px;font-weight:700;color:var(--muted);
+}
+.mark[aria-pressed="true"].p{background:var(--ok);border-color:var(--ok);color:#fff}
+.mark[aria-pressed="true"].a{background:var(--bad);border-color:var(--bad);color:#fff}
+.nextline{margin:14px 0 0;padding:12px 14px;border-radius:10px;background:var(--surface);border:1px dashed var(--line);font-size:14px}
+.empty{margin:4px 0 0;padding:16px;border-radius:10px;background:var(--surface);border:1px solid var(--line);color:var(--muted)}
+
+/* week */
+.togglerow{display:flex;justify-content:flex-end;margin:16px 0 8px}
+.togglerow label{display:inline-flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer}
+.togglerow input{width:18px;height:18px;accent-color:var(--accent)}
+.gridwrap{overflow-x:auto}
+.grid{display:grid;gap:5px;min-width:0}
+.grid .dh{text-align:center;font-weight:700;font-size:14px;padding:4px 0;color:var(--muted)}
+.grid .dh.today{color:var(--accent)}
+.grid .ph{font-variant-numeric:tabular-nums;font-size:11px;color:var(--muted);line-height:1.3;padding-top:7px}
+.grid .ph b{display:block;font-size:14px;color:var(--ink)}
+.grid .cell{
+  position:relative;text-align:left;min-height:84px;border:0;border-radius:8px;padding:8px 8px 8px 12px;
+  background:hsl(var(--h) var(--tint-s) var(--tint-l));font-size:13px;font-weight:700;line-height:1.4;overflow:hidden;
+  overflow-wrap:anywhere;
+}
+.grid .cell::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:hsl(var(--h) var(--stripe-s) var(--stripe-l))}
+.grid .cell small{display:block;margin-top:3px;font-weight:400;color:var(--muted);font-size:11px}
+.grid .free{min-height:84px;border-radius:8px;border:1px dashed var(--line)}
+.grid .lunch{grid-column:1/-1;text-align:center;font-size:11px;color:var(--muted);padding:2px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.note{font-size:12px;color:var(--muted);margin:12px 0 0}
+
+/* grades */
+.jump{display:flex;gap:6px;overflow-x:auto;padding:16px 0 4px;margin:0 -16px;padding-left:16px;padding-right:16px;scrollbar-width:none}
+.jump::-webkit-scrollbar{display:none}
+.jump .chip{flex:none;white-space:nowrap;border-color:hsl(var(--h) var(--stripe-s) var(--stripe-l))}
+.gc{position:relative;margin-top:14px;padding:16px 16px 14px 20px;border-radius:12px;background:var(--surface);border:1px solid var(--line);overflow:hidden;scroll-margin-top:12px}
+.gc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:hsl(var(--h) var(--stripe-s) var(--stripe-l))}
+.gc.flash{box-shadow:0 0 0 2px var(--accent)}
+.gc h2{margin:0;font-size:18px;line-height:1.35}
+.gc .sub{margin:0;font-size:13px;color:var(--muted)}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:14px 0 10px;gap:2px;background:var(--line)}
+.bar i{display:block;background:hsl(var(--h) var(--stripe-s) var(--stripe-l))}
+.legend{list-style:none;margin:0;padding:0}
+.legend li{display:grid;grid-template-columns:14px 1fr auto;gap:2px 10px;align-items:baseline;padding:5px 0;border-top:1px solid var(--line)}
+.legend li:first-child{border-top:0}
+.legend .sw{width:12px;height:12px;border-radius:3px;background:hsl(var(--h) var(--stripe-s) var(--stripe-l));align-self:center}
+.legend .lb{font-weight:700;font-size:14px}
+.legend .pc{font-weight:900;font-variant-numeric:tabular-nums;font-size:16px}
+.legend .ds{grid-column:2/4;font-size:12px;color:var(--muted);margin-top:-2px}
+.cap{font-size:12px;color:var(--muted);margin:10px 0 0}
+.facts{margin:12px 0 0;padding:0;list-style:none;font-size:13.5px}
+.facts li{padding:6px 0 6px 0;border-top:1px solid var(--line)}
+.rule{display:inline-block;margin-top:10px;font-size:12px;font-weight:700;border-radius:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent)}
+.warn{margin:12px 0 0;padding:10px 12px;border-radius:8px;background:var(--warn-bg);color:var(--bad);font-size:13px;font-weight:500}
+.textgrade{margin:12px 0 0;font-size:15px;font-weight:700}
+
+/* attendance */
+.ac{position:relative;margin-top:14px;padding:16px 16px 14px 20px;border-radius:12px;background:var(--surface);border:1px solid var(--line);overflow:hidden}
+.ac::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:hsl(var(--h) var(--stripe-s) var(--stripe-l))}
+.ac h2{margin:0;font-size:17px;line-height:1.35}
+.ac .sub{margin:0;font-size:12.5px;color:var(--muted)}
+.sqs{display:flex;flex-wrap:wrap;gap:5px;margin:12px 0 8px}
+.sq{width:24px;height:24px;border-radius:6px;border:1.5px solid var(--line);position:relative}
+.sq.p{background:var(--ok);border-color:var(--ok)}
+.sq.a{border-color:var(--bad)}
+.sq.a::before,.sq.a::after{content:"";position:absolute;left:50%;top:50%;width:13px;height:2px;background:var(--bad);transform:translate(-50%,-50%) rotate(45deg)}
+.sq.a::after{transform:translate(-50%,-50%) rotate(-45deg)}
+.stats{display:flex;flex-wrap:wrap;gap:2px 16px;font-size:14px;font-weight:700}
+.stats .ok{color:var(--ok)} .stats .bad{color:var(--bad)}
+.verdict{margin:8px 0 0;font-size:14px;font-weight:700}
+.verdict.bad{color:var(--bad)}
+.stepper{display:inline-flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--muted)}
+.stepper button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:transparent;font-size:16px;line-height:1}
+.stepper b{min-width:1.5em;text-align:center;color:var(--ink);font-size:15px}
+.logs{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.log{border:1px solid var(--line);background:transparent;border-radius:8px;padding:2px 10px;font-size:12.5px;font-variant-numeric:tabular-nums}
+.log.p{border-color:var(--ok);color:var(--ok)}
+.log.a{border-color:var(--bad);color:var(--bad)}
+.addrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.addrow input[type=date]{font:inherit;font-size:14px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.addrow .mark{padding:4px 14px}
+.hint{margin:8px 0 0;font-size:12px;color:var(--muted)}
+.sechead{margin:24px 0 0;font-size:13px;font-weight:700;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>履修スケジュール</h1>
+    <div class="term"><span>2026年度 3Q(後期)</span><span>合計9単位</span><span>駿河台キャンパス</span></div>
+  </header>
+
+  <main>
+    <section class="view" id="v-today" data-view="today" aria-label="今日の授業"></section>
+    <section class="view" id="v-week" data-view="week" aria-label="時間割"></section>
+    <section class="view" id="v-grades" data-view="grades" aria-label="成績評価"></section>
+    <section class="view" id="v-attendance" data-view="attendance" aria-label="出欠"></section>
+  </main>
+</div>
+
+<nav class="tabs" aria-label="ページ切り替え">
+  <a href="#today" data-nav="today">今日</a>
+  <a href="#week" data-nav="week">時間割</a>
+  <a href="#grades" data-nav="grades">成績評価</a>
+  <a href="#attendance" data-nav="attendance">出欠</a>
+</nav>
+
+<script>
+(function(){
+  var PERIODS={1:['08:40','10:10'],2:['10:20','11:50'],3:['12:40','14:10'],4:['14:20','15:50'],5:['16:00','17:30'],6:['17:40','19:10']};
+  var DAYS=['日','月','火','水','木','金','土'];
+
+  var COURSES=[
+    {id:'ad',name:'広告発想論B',teacher:'本多 忠房',hue:345,slots:[{d:2,p:2}],
+      grade:{items:[{l:'授業でのパフォーマンス',s:'チャットなどでの発言とFSの内容',v:70},{l:'最終課題',v:30}]},
+      att:{type:'none'},notes:[]},
+    {id:'sem',name:'ゼミ I',full:'ゼミ I(現代広告表現研究ゼミ)',teacher:'本多 忠房',hue:28,slots:[{d:2,p:4}],
+      grade:null,att:{type:'none'},notes:['成績評価の情報はまだ登録されていません。']},
+    {id:'media',name:'現代メディア表現',teacher:'占部 雅一',hue:150,slots:[{d:2,p:5}],
+      grade:{items:[{l:'平常点',v:50},{l:'レポート',v:50}],cap:'当初の予定の配点'},
+      att:{type:'none'},
+      notes:['当初は「レポートを予定。人数次第で試験を実施」とされていました。',
+             '追記:最終評価として試験を実施。資料などの持ち込みは一切禁止。',
+             '試験の内容:授業のテーマや出てきたキーワードについて、5〜10問ほど簡単に解説する形式。',
+             '対策:FBの過去のテーマや投稿を見ると、おおよそ分かる。'],
+      warn:'追記で試験が最終評価になりましたが、平常点とレポートの配分がどう変わるかは書かれていません。担当教員の案内を確認してください。'},
+    {id:'career',name:'キャリア概論',teacher:'赤荻 未加',hue:270,slots:[{d:3,p:2}],
+      grade:{items:[{l:'期末課題(レポート提出)',v:80},{l:'毎回のフィードバックシート',v:20}]},
+      att:{type:'rate',v:70},notes:[]},
+    {id:'genai',name:'生成AI基礎',teacher:'臼井 拓水',hue:185,slots:[{d:3,p:4}],
+      grade:{text:'認定科目(点数による評価ではありません)'},
+      att:{type:'rate',v:70},notes:['単位修得には70%以上の出席率が必要です。']},
+    {id:'econ',name:'経済学基礎',teacher:'伊藤 信雄',hue:215,slots:[{d:5,p:1}],
+      grade:{items:[{l:'期末テスト',s:'デジキャン上で出題。成績評価は原則これで行う',v:null},{l:'授業中・授業後の質疑',s:'加点要素。質問がなくてもテストだけで合格(単位取得)できる',v:null}]},
+      att:{type:'min',v:6},
+      notes:['出席6回以上が評価対象です。','追試験・再試験は行いません。','Zoomのチャットへの書き込みや、デジキャン上での質問が加点になることがあります。']},
+    {id:'sus',name:'持続可能論',teacher:'岩田 優子',hue:95,slots:[{d:5,p:2}],
+      grade:{items:[{l:'グループ発表',v:50},{l:'授業の参画度・受講態度',s:'質疑応答・討論への参加を含む',v:50}]},
+      att:{type:'none'},notes:[]},
+    {id:'logic',name:'ロジカルシンキング II',teacher:'青木 俊太郎',hue:55,slots:[{d:5,p:3}],
+      grade:{items:[{l:'授業内のリアクション',v:30},{l:'ミニ課題',s:'個人・グループ',v:40},{l:'期末レポート',s:'個人・グループ',v:30}]},
+      att:{type:'none'},notes:[]},
+    {id:'dist',name:'配信ビジネス',teacher:'志村 優',hue:305,slots:[{d:5,p:4}],
+      grade:{items:[
+        {l:'ディスカッションへの貢献',s:'各講座のディスカッションでの理解の深まりと意見形成を評価',v:20},
+        {l:'ケーススタディ分析',s:'TikTokのショートドラマの事例を分析してレポートを提出',v:25},
+        {l:'ショートドラマの制作',s:'構想・脚本・撮影・編集を経て制作し、TikTokに投稿',v:30},
+        {l:'最終プレゼンテーション',s:'制作の過程と成果、縦型ショートドラマの未来への貢献を発表',v:30}]},
+      att:{type:'none'},notes:[],
+      warn:'配点を足すと105%になります(20+25+30+30)。シラバスの数字を確認してください。バーは合計を100として按分して表示しています。'}
+  ];
+
+  var KEY='dhu-2026-q3-attendance-v1';
+  var store={log:{},total:{}};
+  try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);if(o&&o.log)store.log=o.log;if(o&&o.total)store.total=o.total;}}catch(e){}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+
+  function byId(id){for(var i=0;i<COURSES.length;i++)if(COURSES[i].id===id)return COURSES[i];}
+  function toMin(s){var a=s.split(':');return +a[0]*60+ +a[1];}
+  function pad(n){return n<10?'0'+n:''+n;}
+  function dateKey(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+  function slotsByDay(d){
+    var out=[];
+    COURSES.forEach(function(c){c.slots.forEach(function(s){if(s.d===d)out.push({c:c,p:s.p});});});
+    return out.sort(function(a,b){return a.p-b.p;});
+  }
+  function slotText(c){var s=c.slots[0];return DAYS[s.d]+'曜'+s.p+'限 '+PERIODS[s.p][0]+'–'+PERIODS[s.p][1];}
+  function total(id){return store.total[id]||8;}
+  function stats(id){
+    var l=store.log[id]||{},p=0,a=0;
+    Object.keys(l).forEach(function(k){if(l[k]==='p')p++;else if(l[k]==='a')a++;});
+    return {p:p,a:a};
+  }
+  function need(c){
+    var N=total(c.id);
+    if(c.att.type==='rate')return Math.ceil(N*c.att.v/100);
+    if(c.att.type==='min')return Math.min(c.att.v,N);
+    return 0;
+  }
+  function ruleText(c){
+    if(c.att.type==='rate')return '出席率'+c.att.v+'%以上が必要';
+    if(c.att.type==='min')return c.att.v+'回以上の出席が評価対象';
+    return 'シラバスに出席条件の記載なし';
+  }
+  function fmtDur(m){var h=Math.floor(m/60),r=m%60;return h?(r?h+'時間'+r+'分':h+'時間'):r+'分';}
+
+  var selDow=new Date().getDay();
+  var showAllDays=false;
+
+  /* ---------- today ---------- */
+  function renderToday(){
+    var now=new Date(),todayDow=now.getDay(),nowMin=now.getHours()*60+now.getMinutes();
+    var isToday=selDow===todayDow;
+    var list=slotsByDay(selDow);
+    var h='';
+    h+='<div class="hero"><div class="date">';
+    if(isToday){h+='<span class="md">'+(now.getMonth()+1)+'月'+now.getDate()+'日</span><span class="wd">'+DAYS[todayDow]+'曜日</span>';}
+    else{h+='<span class="md">'+DAYS[selDow]+'曜日</span><span class="wd">の授業</span>';}
+    h+='</div><p class="sum">';
+    if(list.length){
+      h+=list.length+'コマ　'+PERIODS[list[0].p][0]+'から'+PERIODS[list[list.length-1].p][1]+'まで';
+    }else{h+='授業はありません';}
+    h+='</p></div>';
+
+    h+='<div class="chips" role="group" aria-label="曜日を選ぶ">';
+    [1,2,3,4,5,6].forEach(function(d){
+      h+='<button class="chip'+(d===todayDow?' istoday':'')+'" data-day="'+d+'" aria-pressed="'+(d===selDow)+'">'+DAYS[d]+'</button>';
+    });
+    h+='</div>';
+
+    if(list.length){
+      var nextMarked=false;
+      h+='<ol class="rail">';
+      list.forEach(function(x,i){
+        var s=toMin(PERIODS[x.p][0]),e=toMin(PERIODS[x.p][1]);
+        var state='',tag='';
+        if(isToday){
+          if(nowMin>=e){state='done';tag='終了';}
+          else if(nowMin>=s){state='now';tag='授業中　あと'+fmtDur(e-nowMin);}
+          else if(!nextMarked){state='next';nextMarked=true;tag='次の授業　'+fmtDur(s-nowMin)+'後に開始';}
+        }
+        if(i>0){
+          var pe=toMin(PERIODS[list[i-1].p][1]),gap=s-pe;
+          if(gap>15){
+            h+='<li class="gap">空き '+fmtDur(gap)+(pe<=710&&s>=760?'(昼休みを含む)':'')+'</li>';
+          }
+        }
+        var c=x.c,k=dateKey(now),cur=(store.log[c.id]||{})[k];
+        h+='<li class="row course '+state+'" style="--h:'+c.hue+'">';
+        h+='<div class="t"><b>'+PERIODS[x.p][0]+'</b><span>'+PERIODS[x.p][1]+'</span></div>';
+        h+='<div class="card"><div class="name">'+c.name+'</div><div class="meta">'+x.p+'限　'+c.teacher+'</div>';
+        if(tag)h+='<span class="state">'+tag+'</span>';
+        if(isToday){
+          h+='<div class="marks"><button class="mark p" data-mark="'+c.id+'|p" aria-pressed="'+(cur==='p')+'">出席</button>'+
+             '<button class="mark a" data-mark="'+c.id+'|a" aria-pressed="'+(cur==='a')+'">欠席</button></div>';
+        }
+        h+='</div></li>';
+      });
+      h+='</ol>';
+    }else{
+      h+='<p class="empty">この曜日に授業はありません。</p>';
+    }
+
+    if(isToday){
+      var nx=findNext(now,nowMin);
+      if(nx&&(!list.length||nx.i>0)){
+        var when=nx.i===0?'今日':nx.i===1?'明日':DAYS[nx.d]+'曜日';
+        h+='<p class="nextline">次の授業は'+when+'の'+nx.item.p+'限、<strong>'+nx.item.c.name+'</strong>('+PERIODS[nx.item.p][0]+'から)です。</p>';
+      }
+    }
+    document.getElementById('v-today').innerHTML=h;
+  }
+  function findNext(now,nowMin){
+    for(var i=0;i<8;i++){
+      var d=(now.getDay()+i)%7;
+      var l=slotsByDay(d).filter(function(x){return i>0||toMin(PERIODS[x.p][0])>nowMin;});
+      if(l.length)return {i:i,d:d,item:l[0]};
+    }
+    return null;
+  }
+
+  /* ---------- week ---------- */
+  function renderWeek(){
+    var days=showAllDays?[1,2,3,4,5,6]:[2,3,5];
+    var todayDow=new Date().getDay();
+    var cols='44px repeat('+days.length+',minmax(0,1fr))';
+    var h='<div class="togglerow"><label><input type="checkbox" id="allDays"'+(showAllDays?' checked':'')+'>授業のない曜日も表示</label></div>';
+    h+='<div class="gridwrap"><div class="grid" style="grid-template-columns:'+cols+'">';
+    h+='<div></div>';
+    days.forEach(function(d){h+='<div class="dh'+(d===todayDow?' today':'')+'">'+DAYS[d]+'</div>';});
+    [1,2,3,4,5].forEach(function(p){
+      if(p===3)h+='<div class="lunch">昼休み 11:50–12:40</div>';
+      h+='<div class="ph"><b>'+p+'</b>'+PERIODS[p][0]+'</div>';
+      days.forEach(function(d){
+        var hit=null;
+        COURSES.forEach(function(c){c.slots.forEach(function(s){if(s.d===d&&s.p===p)hit=c;});});
+        if(hit){
+          h+='<button class="cell course" style="--h:'+hit.hue+'" data-cell="'+hit.id+'">'+hit.name+'<small>'+hit.teacher+'</small></button>';
+        }else{h+='<div class="free"></div>';}
+      });
+    });
+    h+='</div></div>';
+    h+='<p class="note">科目をタップすると成績評価を開きます。6限(17:40–19:10)に授業はありません。</p>';
+    document.getElementById('v-week').innerHTML=h;
+  }
+
+  /* ---------- grades ---------- */
+  function renderGrades(){
+    var h='<div class="jump" role="group" aria-label="科目へ移動">';
+    COURSES.forEach(function(c){h+='<button class="chip course" style="--h:'+c.hue+'" data-jump="'+c.id+'">'+c.name+'</button>';});
+    h+='</div>';
+    COURSES.forEach(function(c){
+      h+='<article class="gc course" id="g-'+c.id+'" style="--h:'+c.hue+'">';
+      h+='<h2>'+(c.full||c.name)+'</h2><p class="sub">'+c.teacher+'　'+slotText(c)+'</p>';
+      var g=c.grade;
+      if(g&&g.text){h+='<p class="textgrade">'+g.text+'</p>';}
+      else if(g&&g.items){
+        var allNum=g.items.every(function(i){return typeof i.v==='number';});
+        if(allNum){
+          var sum=g.items.reduce(function(a,i){return a+i.v;},0);
+          h+='<div class="bar" role="img" aria-label="配点の内訳">';
+          g.items.forEach(function(i,idx){
+            h+='<i style="width:'+(i.v/sum*100)+'%;opacity:'+[1,.75,.55,.38][idx%4]+'"></i>';
+          });
+          h+='</div>';
+        }
+        h+='<ul class="legend">';
+        g.items.forEach(function(i,idx){
+          h+='<li><span class="sw" style="'+(allNum?'opacity:'+[1,.75,.55,.38][idx%4]:'')+'"></span><span class="lb">'+i.l+'</span>'+
+             '<span class="pc">'+(typeof i.v==='number'?i.v+'%':'')+'</span>'+(i.s?'<span class="ds">'+i.s+'</span>':'')+'</li>';
+        });
+        h+='</ul>';
+        if(g.cap)h+='<p class="cap">'+g.cap+'</p>';
+      }else{h+='<p class="textgrade" style="color:var(--muted);font-weight:500">成績評価の情報がありません。</p>';}
+      if(c.att.type!=='none')h+='<span class="rule">'+ruleText(c)+'</span>';
+      if(c.notes&&c.notes.length){h+='<ul class="facts">'+c.notes.map(function(n){return '<li>'+n+'</li>';}).join('')+'</ul>';}
+      if(c.warn)h+='<p class="warn">'+c.warn+'</p>';
+      h+='</article>';
+    });
+    document.getElementById('v-grades').innerHTML=h;
+  }
+
+  /* ---------- attendance ---------- */
+  function renderAttendance(){
+    var order=COURSES.slice().sort(function(a,b){return (a.att.type==='none'?1:0)-(b.att.type==='none'?1:0);});
+    var todayKey=dateKey(new Date());
+    var h='<p class="hint" style="margin-top:18px">授業の日に「今日」画面の出席・欠席を押すと、ここに記録されます。出席条件のある科目を上に並べています。</p>';
+    var sectionDone=false;
+    order.forEach(function(c,idx){
+      if(c.att.type==='none'&&!sectionDone){sectionDone=true;h+='<p class="sechead">出席条件の記載がない科目</p>';}
+      var N=total(c.id),st=stats(c.id),nd=need(c);
+      h+='<article class="ac course" id="a-'+c.id+'" style="--h:'+c.hue+'">';
+      h+='<h2>'+c.name+'</h2><p class="sub">'+ruleText(c)+(c.att.type!=='none'?'(全'+N+'回で出席'+nd+'回以上)':'')+'</p>';
+      h+='<div class="sqs" aria-hidden="true">';
+      for(var i=0;i<Math.max(N,st.p+st.a);i++){h+='<span class="sq '+(i<st.p?'p':i<st.p+st.a?'a':'')+'"></span>';}
+      h+='</div>';
+      h+='<div class="stats"><span class="ok">出席 '+st.p+'回</span><span class="bad">欠席 '+st.a+'回</span><span>残り '+Math.max(0,N-st.p-st.a)+'回</span></div>';
+      if(c.att.type!=='none'){
+        var left=(N-nd)-st.a;
+        if(left>0)h+='<p class="verdict">あと欠席できる回数 '+left+'回</p>';
+        else if(left===0)h+='<p class="verdict bad">これ以上欠席できません(あと欠席0回)</p>';
+        else h+='<p class="verdict bad">基準を下回っています(出席'+nd+'回以上が必要)</p>';
+      }
+      h+='<div class="stepper">全<button data-total="'+c.id+'|-1" aria-label="全回数を減らす">−</button><b>'+N+'</b><button data-total="'+c.id+'|1" aria-label="全回数を増やす">＋</button>回</div>';
+      var l=store.log[c.id]||{},keys=Object.keys(l).sort().reverse();
+      if(keys.length){
+        h+='<div class="logs">';
+        keys.forEach(function(k){
+          var p=k.split('-');
+          h+='<button class="log '+l[k]+'" data-chip="'+c.id+'|'+k+'" title="タップで切り替え・削除">'+(+p[1])+'/'+(+p[2])+' '+(l[k]==='p'?'出席':'欠席')+'</button>';
+        });
+        h+='</div><p class="hint">記録をタップすると、出席→欠席→削除の順に変わります。</p>';
+      }
+      h+='<div class="addrow"><input type="date" id="d-'+c.id+'" value="'+todayKey+'" aria-label="日付">'+
+         '<button class="mark p" data-add="'+c.id+'|p">出席を追加</button><button class="mark a" data-add="'+c.id+'|a">欠席を追加</button></div>';
+      h+='</article>';
+    });
+    h+='<p class="note">記録はこの端末のブラウザにだけ保存されます。大学の出欠システムとは連動していません。全回数は仮に8回としています。授業案内で確認して変更してください。</p>';
+    document.getElementById('v-attendance').innerHTML=h;
+  }
+
+  /* ---------- routing ---------- */
+  var VIEWS=['today','week','grades','attendance'];
+  var renderers={today:renderToday,week:renderWeek,grades:renderGrades,attendance:renderAttendance};
+  var current='today';
+  function currentView(){
+    var h=(location.hash||'').replace('#','');
+    return VIEWS.indexOf(h)>=0?h:'today';
+  }
+  function show(){
+    current=currentView();
+    VIEWS.forEach(function(v){
+      document.getElementById('v-'+v).classList.toggle('on',v===current);
+    });
+    document.querySelectorAll('[data-nav]').forEach(function(a){
+      if(a.getAttribute('data-nav')===current)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
+    });
+    renderers[current]();
+    window.scrollTo(0,0);
+  }
+  function rerender(){
+    var y=window.scrollY;renderers[current]();window.scrollTo(0,y);
+  }
+  function goGrades(id){
+    if(location.hash!=='#grades'){
+      var once=function(){window.removeEventListener('hashchange',once);setTimeout(focusCard,30);};
+      window.addEventListener('hashchange',once);
+      location.hash='#grades';
+    }else{focusCard();}
+    function focusCard(){
+      var el=document.getElementById('g-'+id);
+      if(!el)return;
+      el.scrollIntoView({behavior:'smooth',block:'start'});
+      el.classList.add('flash');
+      setTimeout(function(){el.classList.remove('flash');},1600);
+    }
+  }
+
+  document.addEventListener('click',function(e){
+    var t=e.target.closest('[data-day],[data-mark],[data-chip],[data-add],[data-total],[data-cell],[data-jump]');
+    if(!t)return;
+    var v;
+    if(t.hasAttribute('data-day')){selDow=+t.getAttribute('data-day');renderToday();return;}
+    if(t.hasAttribute('data-mark')){
+      v=t.getAttribute('data-mark').split('|');
+      var k=dateKey(new Date());
+      store.log[v[0]]=store.log[v[0]]||{};
+      if(store.log[v[0]][k]===v[1])delete store.log[v[0]][k];else store.log[v[0]][k]=v[1];
+      save();rerender();return;
+    }
+    if(t.hasAttribute('data-chip')){
+      v=t.getAttribute('data-chip').split('|');
+      var cur=(store.log[v[0]]||{})[v[1]];
+      if(cur==='p')store.log[v[0]][v[1]]='a';else delete store.log[v[0]][v[1]];
+      save();rerender();return;
+    }
+    if(t.hasAttribute('data-add')){
+      v=t.getAttribute('data-add').split('|');
+      var inp=document.getElementById('d-'+v[0]);
+      if(!inp||!inp.value)return;
+      store.log[v[0]]=store.log[v[0]]||{};
+      store.log[v[0]][inp.value]=v[1];
+      save();rerender();return;
+    }
+    if(t.hasAttribute('data-total')){
+      v=t.getAttribute('data-total').split('|');
+      var n=Math.min(30,Math.max(1,total(v[0])+(+v[1])));
+      store.total[v[0]]=n;save();rerender();return;
+    }
+    if(t.hasAttribute('data-cell')){goGrades(t.getAttribute('data-cell'));return;}
+    if(t.hasAttribute('data-jump')){
+      var el=document.getElementById('g-'+t.getAttribute('data-jump'));
+      if(el){el.scrollIntoView({behavior:'smooth',block:'start'});el.classList.add('flash');setTimeout(function(){el.classList.remove('flash');},1600);}
+    }
+  });
+  document.addEventListener('change',function(e){
+    if(e.target&&e.target.id==='allDays'){showAllDays=e.target.checked;renderWeek();}
+  });
+  window.addEventListener('hashchange',show);
+  setInterval(function(){if(current==='today')renderToday();},60000);
+  show();
+  if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+    window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});
+  }
+})();
+</script>
+</body>
+</html>

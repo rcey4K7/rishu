@@ -1,0 +1,16 @@
+{
+  "name": "履修スケジュール 2026年度 後期3Q",
+  "short_name": "履修",
+  "description": "時間割・成績評価・出欠をまとめて確認",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "ja",
+  "background_color": "#F1F3F8",
+  "theme_color": "#2B47D1",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
